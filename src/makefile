@@ -65,7 +65,7 @@ OBJSC = main.o initialization.o readfiles.o atomdata.o parallelization.o relax.o
         occupation.o lapVecRoutines.o gradVecRoutines.o gradVecRoutinesKpt.o nlocVecRoutines.o   \
         hamiltonianVecRoutines.o lapVecOrth.o lapVecOrthKpt.o lapVecNonOrth.o lapVecNonOrthKpt.o \
         linearSolver.o mixing.o exchangeCorrelation.o eigenSolver.o eigenSolverKpt.o energy.o    \
-        forces.o stress.o pressure.o finalization.o
+        forces.o stress.o pressure.o finalization.o pseudoDiag.o
 
 LIBBASE = ../lib/sparc
 TESTBASE = ../.ci

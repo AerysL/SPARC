@@ -105,7 +105,7 @@ void DP_Project_Hamiltonian(SPARC_OBJ *pSPARC, int *DMVertices, double *Y, doubl
  *          Rank 0 of each kpt_comm will solve this generalized eigenproblem locally and 
  *          then broadcast the obtained eigenvectors to all other processes in this kpt_comm.
  */
-void DP_Solve_Generalized_EigenProblem(SPARC_OBJ *pSPARC, int spn_i);
+void DP_Solve_Generalized_EigenProblem(SPARC_OBJ *pSPARC, int spn_i, int count);
 
 /**
  * @brief   Perform subspace rotation, i.e. rotate the orbitals, using domain parallelization
