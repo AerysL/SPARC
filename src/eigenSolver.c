@@ -49,7 +49,7 @@
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)<(b)?(a):(b))
 
-#define opt_pulay 1
+int use_pulay_dsygv = 0;
 #include "pseudoDiag.h"
 
 #ifdef USE_EVA_MODULE
@@ -752,6 +752,11 @@ void init_DP_CheFSI(SPARC_OBJ *pSPARC)
     assert(DP_CheFSI->Hp_local   != NULL);
     assert(DP_CheFSI->eig_vecs   != NULL);
     pSPARC->DP_CheFSI = (void*) DP_CheFSI;
+
+    char *use_pulay_dsygv_p = getenv("PULAY_DSYGV");
+    if (use_pulay_dsygv_p != NULL) use_pulay_dsygv = atoi(use_pulay_dsygv_p);
+    else use_pulay_dsygv = 0;
+    if (use_pulay_dsygv != 1) use_pulay_dsygv = 0;
 }
 
 /**
@@ -898,7 +903,7 @@ void DP_Solve_Generalized_EigenProblem(SPARC_OBJ *pSPARC, int spn_i, int count)
         else
             pulay_cutoff = pSPARC->rhoTrigger;
         
-        int use_pulay = (count >= pulay_cutoff) && (opt_pulay);
+        int use_pulay = (count >= pulay_cutoff) && (use_pulay_dsygv);
 
         int Ns_dp = DP_CheFSI->Ns_dp;
         int rank_kpt = DP_CheFSI->rank_kpt;
@@ -914,7 +919,7 @@ void DP_Solve_Generalized_EigenProblem(SPARC_OBJ *pSPARC, int spn_i, int count)
             if (use_pulay == 0)
             { 
                 //printf("count = %d, rhoTrigger = %d, use eigensolve\n", count, pSPARC->rhoTrigger);
-                LAPACKE_dsygv(
+                LAPACKE_dsygvd(
                     LAPACK_COL_MAJOR, 1, 'V', 'U', Ns_dp, 
                     Hp_local, Ns_dp, Mp_local, Ns_dp, eig_val
                 );
@@ -930,7 +935,7 @@ void DP_Solve_Generalized_EigenProblem(SPARC_OBJ *pSPARC, int spn_i, int count)
         MPI_Bcast(eig_vecs, Ns_dp * Ns_dp, MPI_DOUBLE, 0, DP_CheFSI->kpt_comm);
         double et1 = MPI_Wtime();
         #ifdef DEBUG
-        if ((rank_kpt == 0) && (use_pulay == 0)) printf("DP_Solve_Generalized_EigenProblem rank 0 used %.3lf ms, LAPACKE_dsygv used %.3lf ms\n", 1000.0 * (et1 - st), 1000.0 * (et0 - st));
+        if ((rank_kpt == 0) && (use_pulay == 0)) printf("DP_Solve_Generalized_EigenProblem rank 0 used %.3lf ms, LAPACKE_dsygvd used %.3lf ms\n", 1000.0 * (et1 - st), 1000.0 * (et0 - st));
         if ((rank_kpt == 0) && (use_pulay == 1)) printf("DP_Solve_Generalized_EigenProblem rank 0 used %.3lf ms, pulay_dsygv used %.3lf ms\n", 1000.0 * (et1 - st), 1000.0 * (et0 - st));
         #endif
     } else {
@@ -1229,7 +1234,7 @@ void Solve_Generalized_EigenProblem(SPARC_OBJ *pSPARC, int k, int spn_i)
         t1 = MPI_Wtime();
         if ((!pSPARC->is_domain_uniform && !pSPARC->bandcomm_index) ||
             (pSPARC->is_domain_uniform && !rank_kptcomm)) {
-            info = LAPACKE_dsygv(LAPACK_COL_MAJOR,1,'V','U',pSPARC->Nstates,pSPARC->Hp,
+            info = LAPACKE_dsygvd(LAPACK_COL_MAJOR,1,'V','U',pSPARC->Nstates,pSPARC->Hp,
                           pSPARC->Nstates,pSPARC->Mp,pSPARC->Nstates,
                           pSPARC->lambda + spn_i*pSPARC->Nstates);
         }
@@ -1237,7 +1242,7 @@ void Solve_Generalized_EigenProblem(SPARC_OBJ *pSPARC, int k, int spn_i)
         #ifdef DEBUG
         if(!rank_spincomm && spn_i == 0) {
             printf("==generalized eigenproblem: "
-                   "info = %d, solving generalized eigenproblem using LAPACK_dsygv: %.3f ms\n", 
+                   "info = %d, solving generalized eigenproblem using LAPACKE_dsygvd: %.3f ms\n", 
                    info, (t2 - t1)*1e3);
         }
         #endif
