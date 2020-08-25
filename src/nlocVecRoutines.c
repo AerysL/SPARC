@@ -692,6 +692,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     double *alpha, *x_rc, *Vnlx;
     alpha = (double *)calloc( pSPARC->IP_displ[pSPARC->n_atom] * ncol, sizeof(double));
     //first find inner product
+#pragma omp parallel for private(ndc, x_rc, atom_index, iat, n, i)
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         //int lloc = pSPARC->localPsd[ityp];
         //lmax = pSPARC->psd[ityp].lmax;
@@ -745,6 +746,7 @@ void Vnl_vec_mult(const SPARC_OBJ *pSPARC, int DMnd, ATOM_NLOC_INFLUENCE_OBJ *At
     }
 
     // multiply the inner product and the nonlocal projector
+#pragma omp parallel for private(ndc, atom_index, iat, n, i, Vnlx)
     for (ityp = 0; ityp < pSPARC->Ntypes; ityp++) {
         if (! nlocProj[ityp].nproj) continue; // this is typical for hydrogen
         for (iat = 0; iat < Atom_Influence_nloc[ityp].n_atom; iat++) {
